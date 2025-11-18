@@ -35,7 +35,11 @@ class AzureAuthenticator {
         scopes: ['https://graph.microsoft.com/.default'],
       };
 
-      const response = await this.msalInstance.acquireTokenSilent(clientCredentialRequest);
+      const response = await this.msalInstance.acquireTokenByClientCredential(clientCredentialRequest);
+      
+      if (!response) {
+        throw new Error('No response received from authentication service');
+      }
       
       this.accessToken = response.accessToken;
       this.tokenExpiry = response.expiresOn || new Date(Date.now() + 3600000);

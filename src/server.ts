@@ -14,11 +14,6 @@ class AzureGraphMCPServer {
       {
         name: 'azure-graph-mcp-server',
         version: '1.0.0',
-      },
-      {
-        capabilities: {
-          tools: {},
-        },
       }
     );
 
@@ -102,6 +97,9 @@ class AzureGraphMCPServer {
             };
 
           case 'search_intune_devices':
+            if (!args?.query) {
+              throw new Error('Query parameter is required');
+            }
             const searchResults = await intuneService.searchDevices(args.query as string);
             return {
               content: [
@@ -113,6 +111,9 @@ class AzureGraphMCPServer {
             };
 
           case 'get_intune_device':
+            if (!args?.deviceId) {
+              throw new Error('DeviceId parameter is required');
+            }
             const device = await intuneService.getDeviceById(args.deviceId as string);
             return {
               content: [
@@ -206,3 +207,8 @@ class AzureGraphMCPServer {
     await this.server.connect(transport);
     console.error('Azure Graph MCP Server running on stdio');
   }
+}
+
+// Start the server
+const server = new AzureGraphMCPServer();
+server.start().catch(console.error);
