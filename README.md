@@ -52,6 +52,9 @@ Transform your entire Microsoft 365 ecosystem into intelligent, conversational i
 | `get_intune_devices` | Retrieve managed devices | None |
 | `search_intune_devices` | Search devices by name/email | `query: string` |
 | `get_compliance_report` | Device compliance summary | None |
+| `export_device_report` | Export device/compliance reports | `reportType?: string` |
+| `get_device_rings` | List deployment rings | None |
+| `lookup_device_ring` | Find device ring assignments | `deviceId: string` |
 
 ## 🚀 Quick Start
 

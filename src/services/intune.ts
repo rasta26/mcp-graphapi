@@ -93,6 +93,68 @@ class IntuneService {
     }
   }
 
+  async exportDeviceReport(reportType: string = 'devices'): Promise<any> {
+    try {
+      const endpoint = reportType === 'compliance' 
+        ? '/deviceManagement/reports/exportJobs'
+        : '/deviceManagement/managedDevices';
+      
+      if (reportType === 'compliance') {
+        const exportJob = {
+          reportName: 'DeviceComplianceReport',
+          format: 'csv',
+          select: ['DeviceName', 'UserPrincipalName', 'ComplianceState', 'LastSyncDateTime']
+        };
+        const response = await this.httpClient.post(endpoint, exportJob);
+        return { exportJobId: response.data.id, status: 'initiated' };
+      } else {
+        const response = await this.httpClient.get(`${endpoint}?$select=deviceName,userPrincipalName,complianceState,operatingSystem,lastSyncDateTime`);
+        return { data: response.data.value, format: 'json' };
+      }
+    } catch (error) {
+      throw new Error(`Failed to export report: ${error}`);
+    }
+  }
+
+  async getDeviceRings(): Promise<any[]> {
+    try {
+      const response = await this.httpClient.get('/deviceManagement/deviceManagementScripts');
+      const rings = await this.httpClient.get('/deviceManagement/deviceConfigurations?$filter=displayName contains \'Ring\'');
+      
+      return rings.data.value.map((ring: any) => ({
+        id: ring.id,
+        name: ring.displayName,
+        description: ring.description,
+        assignmentCount: ring.assignments?.length || 0,
+        createdDateTime: ring.createdDateTime
+      }));
+    } catch (error) {
+      throw new Error(`Failed to fetch device rings: ${error}`);
+    }
+  }
+
+  async lookupDeviceRing(deviceId: string): Promise<any> {
+    try {
+      const device = await this.httpClient.get(`/deviceManagement/managedDevices/${deviceId}`);
+      const assignments = await this.httpClient.get(`/deviceManagement/managedDevices/${deviceId}/deviceConfigurationStates`);
+      
+      const rings = assignments.data.value.filter((config: any) => 
+        config.displayName?.toLowerCase().includes('ring')
+      );
+      
+      return {
+        deviceName: device.data.deviceName,
+        assignedRings: rings.map((ring: any) => ({
+          name: ring.displayName,
+          state: ring.state,
+          lastReportedDateTime: ring.lastReportedDateTime
+        }))
+      };
+    } catch (error) {
+      throw new Error(`Failed to lookup device ring: ${error}`);
+    }
+  }
+
   private transformDevice(rawDevice: any): IntuneDevice {
     return {
       id: rawDevice.id,

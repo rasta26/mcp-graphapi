@@ -43,6 +43,28 @@ class UniversalGraphMCPServer {
           description: 'Get device compliance summary',
           inputSchema: { type: 'object', properties: {} },
         },
+        {
+          name: 'export_device_report',
+          description: 'Export device or compliance report',
+          inputSchema: {
+            type: 'object',
+            properties: { reportType: { type: 'string', description: 'Report type: devices or compliance', enum: ['devices', 'compliance'] } },
+          },
+        },
+        {
+          name: 'get_device_rings',
+          description: 'Get all device deployment rings',
+          inputSchema: { type: 'object', properties: {} },
+        },
+        {
+          name: 'lookup_device_ring',
+          description: 'Lookup device ring assignments',
+          inputSchema: {
+            type: 'object',
+            properties: { deviceId: { type: 'string', description: 'Device ID' } },
+            required: ['deviceId'],
+          },
+        },
         // Azure AD Tools
         {
           name: 'get_users',
@@ -109,6 +131,20 @@ class UniversalGraphMCPServer {
           case 'get_compliance_report':
             const report = await intuneService.getComplianceReport();
             return { content: [{ type: 'text', text: this.formatComplianceReport(report) }] };
+
+          case 'export_device_report':
+            const reportType = args?.reportType as string || 'devices';
+            const exportResult = await intuneService.exportDeviceReport(reportType);
+            return { content: [{ type: 'text', text: this.formatExportResult(exportResult) }] };
+
+          case 'get_device_rings':
+            const rings = await intuneService.getDeviceRings();
+            return { content: [{ type: 'text', text: `Found ${rings.length} device rings:\n\n${this.formatDeviceRings(rings)}` }] };
+
+          case 'lookup_device_ring':
+            if (!args?.deviceId) throw new Error('DeviceId required');
+            const ringLookup = await intuneService.lookupDeviceRing(args.deviceId as string);
+            return { content: [{ type: 'text', text: this.formatDeviceRingLookup(ringLookup) }] };
 
           // Azure AD Cases
           case 'get_users':
@@ -190,6 +226,24 @@ class UniversalGraphMCPServer {
            `Non-compliant: ${report.nonCompliantDeviceCount || 0}\n` +
            `Error: ${report.errorDeviceCount || 0}\n` +
            `Unknown: ${report.unknownDeviceCount || 0}`;
+  }
+
+  private formatExportResult(result: any): string {
+    if (result.exportJobId) {
+      return `📤 Export initiated:\nJob ID: ${result.exportJobId}\nStatus: ${result.status}`;
+    }
+    return `📤 Export completed:\nFormat: ${result.format}\nRecords: ${result.data?.length || 0}`;
+  }
+
+  private formatDeviceRings(rings: any[]): string {
+    return rings.map(r => `🔄 ${r.name}\n   Assignments: ${r.assignmentCount}\n   Created: ${r.createdDateTime}`).join('\n\n');
+  }
+
+  private formatDeviceRingLookup(lookup: any): string {
+    const ringsText = lookup.assignedRings.map((ring: any) => 
+      `  • ${ring.name} (${ring.state})`
+    ).join('\n');
+    return `🔍 Device: ${lookup.deviceName}\n📍 Assigned Rings:\n${ringsText}`;
   }
 
   async start() {

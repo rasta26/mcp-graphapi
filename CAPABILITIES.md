@@ -25,7 +25,7 @@ Universal Graph Intelligence MCP Server
     └── Mobile Device Insights
 ```
 
-## 🛠️ Complete Tool Inventory (10 Tools)
+## 🛠️ Complete Tool Inventory (13 Tools)
 
 ### Azure Active Directory (4 tools)
 - **get_users** - Retrieve all Azure AD users with comprehensive details
@@ -38,10 +38,13 @@ Universal Graph Intelligence MCP Server
 - **get_risk_detections** - Get identity risk detections and anomalies
 - **get_security_score** - Organization security posture and compliance score
 
-### Intune Management (3 tools)
+### Intune Management (6 tools)
 - **get_intune_devices** - Comprehensive managed device inventory
 - **search_intune_devices** - Search devices by name, email, or attributes
 - **get_compliance_report** - Real-time device compliance summary and insights
+- **export_device_report** - Export device or compliance reports (CSV/JSON)
+- **get_device_rings** - List all device deployment rings and assignments
+- **lookup_device_ring** - Find specific device ring assignments and status
 
 ## 🔐 Required Microsoft Graph Permissions
 

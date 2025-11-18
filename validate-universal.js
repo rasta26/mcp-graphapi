@@ -54,7 +54,8 @@ server.stdout.on('data', (data) => {
       const expectedTools = [
         'get_users', 'search_users', 'get_groups', 'get_user_roles',
         'get_security_alerts', 'get_risk_detections', 'get_security_score',
-        'get_intune_devices', 'search_intune_devices', 'get_compliance_report'
+        'get_intune_devices', 'search_intune_devices', 'get_compliance_report',
+        'export_device_report', 'get_device_rings', 'lookup_device_ring'
       ];
       
       const availableToolNames = tools.map(t => t.name);
