@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "universal-graph-intelligence": {
+      "command": "node",
+      "args": ["/absolute/path/to/mcp-graphapi/dist/server.js"],
+      "env": {
+        "NODE_ENV": "production"
+      }
+    }
+  }
+}

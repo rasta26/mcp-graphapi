@@ -1,5 +1,6 @@
 import { ConfidentialClientApplication } from '@azure/msal-node';
 import { config } from 'dotenv';
+import { logger } from '../utils/logger.js';
 
 config();
 
@@ -27,10 +28,12 @@ class AzureAuthenticator {
 
   async getAccessToken(): Promise<string> {
     if (this.isTokenValid()) {
+      logger.debug('Using cached access token');
       return this.accessToken!;
     }
 
     try {
+      logger.debug('Acquiring new access token');
       const clientCredentialRequest = {
         scopes: ['https://graph.microsoft.com/.default'],
       };
@@ -44,8 +47,10 @@ class AzureAuthenticator {
       this.accessToken = response.accessToken;
       this.tokenExpiry = response.expiresOn || new Date(Date.now() + 3600000);
       
+      logger.info('Access token acquired successfully');
       return this.accessToken;
     } catch (error) {
+      logger.error('Authentication failed:', error);
       throw new Error(`Authentication failed: ${error}`);
     }
   }

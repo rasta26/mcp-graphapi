@@ -7,17 +7,21 @@ import {
 import { intuneService } from './services/intune.js';
 import { azureADService } from './services/azuread.js';
 import { securityService } from './services/security.js';
+import { logger } from './utils/logger.js';
+import { testConnection } from './utils/connectionTest.js';
 
 class UniversalGraphMCPServer {
   private server: Server;
 
   constructor() {
+    logger.info('Initializing Universal Graph Intelligence MCP Server');
     this.server = new Server({
-      name: 'universal-graph-mcp-server',
+      name: 'universal-graph-intelligence',
       version: '2.0.0',
     });
 
     this.setupToolHandlers();
+    logger.debug('Tool handlers configured');
   }
 
   private setupToolHandlers() {
@@ -115,6 +119,7 @@ class UniversalGraphMCPServer {
 
     this.server.setRequestHandler(CallToolRequestSchema, async (request) => {
       const { name, arguments: args } = request.params;
+      logger.debug(`Tool called: ${name}`, args);
 
       try {
         switch (name) {
@@ -247,9 +252,17 @@ class UniversalGraphMCPServer {
   }
 
   async start() {
+    logger.info('Starting Universal Microsoft Graph Intelligence Server');
+    
+    // Test connection on startup
+    const connected = await testConnection();
+    if (!connected) {
+      logger.warn('Connection test failed - server will start but may have authentication issues');
+    }
+    
     const transport = new StdioServerTransport();
     await this.server.connect(transport);
-    console.error('Universal Microsoft Graph Intelligence Server running on stdio');
+    logger.info('Universal Microsoft Graph Intelligence Server running on stdio');
   }
 }
 

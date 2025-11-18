@@ -81,9 +81,14 @@ Application Permissions Required:
 
 The Universal Microsoft Graph Intelligence server is now ready for integration with:
 - **Claude Desktop** - Through MCP protocol
-- **VSCode Extensions** - Via MCP SDK
+- **VSCode Extensions** - Via MCP SDK and `.vscode/mcp.json` configuration
 - **Custom Applications** - Using MCP client libraries
 - **AI Assistants** - Any MCP-compatible platform
+
+### MCP Configuration Files
+- **`.vscode/mcp.json`** - Local project configuration for VSCode
+- **`mcp-config.json`** - Global configuration template
+- **`MCP-SETUP.md`** - Complete setup instructions
 
 ## 📊 Impact & Value
 

@@ -74,7 +74,30 @@ npm run build
 ### Configuration
 ```bash
 cp .env.example .env
-# Configure your Azure AD credentials
+# Configure your Azure AD credentials and logging level
+# LOG_LEVEL options: ERROR, WARN, INFO, DEBUG
+```
+
+### Testing & Validation
+```bash
+# Test Azure Graph API connection
+npm run test-connection
+
+# Test MCP server functionality  
+node test-server.js
+
+# Validate MCP configuration
+node test-mcp-config.js
+```
+
+### MCP Integration (VSCode)
+The project includes MCP configuration for VSCode:
+- **Local**: `.vscode/mcp.json` (project-specific)
+- **Global**: See `MCP-SETUP.md` for system-wide setup
+
+### Run Server
+```bash
+npm start
 ```
 
 ## 🔧 Azure AD Setup
@@ -125,6 +148,13 @@ graph TB
 - `npm run dev` - Development with hot reload
 - `npm start` - Run compiled server
 - `npm run clean` - Clean build output
+- `npm run test-connection` - Test Azure connectivity
+
+### Logging
+Set log level via environment variable:
+```bash
+LOG_LEVEL=DEBUG npm start  # DEBUG, INFO, WARN, ERROR
+```
 
 ### Testing
 ```bash
