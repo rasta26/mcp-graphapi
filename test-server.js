@@ -2,13 +2,12 @@
 
 import { spawn } from 'child_process';
 
-console.log('Testing Azure Graph MCP Server...');
+console.log('Testing Universal Microsoft Graph Intelligence Server...');
 
 const server = spawn('node', ['dist/server.js'], {
   stdio: ['pipe', 'pipe', 'pipe']
 });
 
-// Test the list tools functionality
 const listToolsRequest = {
   jsonrpc: '2.0',
   id: 1,
@@ -24,10 +23,20 @@ server.stdout.on('data', (data) => {
   try {
     const response = JSON.parse(output.trim());
     if (response.result && response.result.tools) {
-      console.log('✅ Server is working! Available tools:');
-      response.result.tools.forEach(tool => {
-        console.log(`  - ${tool.name}: ${tool.description}`);
+      console.log('✅ Universal Graph Intelligence Server is working!');
+      console.log(`📊 Available tools: ${response.result.tools.length}`);
+      
+      const categories = {
+        'Azure AD': response.result.tools.filter(t => t.name.includes('user') || t.name.includes('group')),
+        'Security': response.result.tools.filter(t => t.name.includes('security') || t.name.includes('risk')),
+        'Intune': response.result.tools.filter(t => t.name.includes('intune') || t.name.includes('compliance'))
+      };
+      
+      Object.entries(categories).forEach(([category, tools]) => {
+        console.log(`\n${category} Tools (${tools.length}):`);
+        tools.forEach(tool => console.log(`  - ${tool.name}`));
       });
+      
       server.kill();
       process.exit(0);
     }
@@ -38,11 +47,11 @@ server.stdout.on('data', (data) => {
 
 server.stderr.on('data', (data) => {
   const error = data.toString();
-  if (error.includes('Azure Graph MCP Server running on stdio')) {
+  if (error.includes('Universal Microsoft Graph Intelligence Server running')) {
     console.log('✅ Server started successfully');
   } else if (error.includes('invalid_client_credential')) {
     console.log('⚠️  Expected authentication error (no credentials configured)');
-    console.log('✅ Server structure is valid - authentication layer working');
+    console.log('✅ Universal Graph Intelligence structure is valid');
     server.kill();
     process.exit(0);
   }

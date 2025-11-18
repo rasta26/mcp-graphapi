@@ -5,160 +5,149 @@ import {
   ListToolsRequestSchema,
 } from '@modelcontextprotocol/sdk/types.js';
 import { intuneService } from './services/intune.js';
+import { azureADService } from './services/azuread.js';
+import { securityService } from './services/security.js';
 
-class AzureGraphMCPServer {
+class UniversalGraphMCPServer {
   private server: Server;
 
   constructor() {
-    this.server = new Server(
-      {
-        name: 'azure-graph-mcp-server',
-        version: '1.0.0',
-      }
-    );
+    this.server = new Server({
+      name: 'universal-graph-mcp-server',
+      version: '2.0.0',
+    });
 
     this.setupToolHandlers();
   }
 
   private setupToolHandlers() {
-    // List available tools - our capability manifest
     this.server.setRequestHandler(ListToolsRequestSchema, async () => ({
       tools: [
+        // Intune Tools
         {
-          name: 'get_all_intune_devices',
-          description: 'Retrieve all Intune managed devices with comprehensive details',
-          inputSchema: {
-            type: 'object',
-            properties: {},
-          },
+          name: 'get_intune_devices',
+          description: 'Retrieve all Intune managed devices',
+          inputSchema: { type: 'object', properties: {} },
         },
         {
           name: 'search_intune_devices',
-          description: 'Search Intune devices by name or email address',
+          description: 'Search Intune devices by name or email',
           inputSchema: {
             type: 'object',
-            properties: {
-              query: {
-                type: 'string',
-                description: 'Search query for device name or email',
-              },
-            },
+            properties: { query: { type: 'string', description: 'Search query' } },
             required: ['query'],
           },
         },
         {
-          name: 'get_intune_device',
-          description: 'Get detailed information about a specific Intune device',
-          inputSchema: {
-            type: 'object',
-            properties: {
-              deviceId: {
-                type: 'string',
-                description: 'The unique identifier of the device',
-              },
-            },
-            required: ['deviceId'],
-          },
-        },
-        {
-          name: 'get_intune_applications',
-          description: 'Retrieve all mobile applications managed by Intune',
-          inputSchema: {
-            type: 'object',
-            properties: {},
-          },
-        },
-        {
           name: 'get_compliance_report',
-          description: 'Get device compliance summary report',
+          description: 'Get device compliance summary',
+          inputSchema: { type: 'object', properties: {} },
+        },
+        // Azure AD Tools
+        {
+          name: 'get_users',
+          description: 'Retrieve all Azure AD users',
+          inputSchema: { type: 'object', properties: {} },
+        },
+        {
+          name: 'search_users',
+          description: 'Search Azure AD users by name or email',
           inputSchema: {
             type: 'object',
-            properties: {},
+            properties: { query: { type: 'string', description: 'Search query' } },
+            required: ['query'],
           },
+        },
+        {
+          name: 'get_groups',
+          description: 'Retrieve all Azure AD groups',
+          inputSchema: { type: 'object', properties: {} },
+        },
+        {
+          name: 'get_user_roles',
+          description: 'Get user role memberships',
+          inputSchema: {
+            type: 'object',
+            properties: { userId: { type: 'string', description: 'User ID' } },
+            required: ['userId'],
+          },
+        },
+        // Security Tools
+        {
+          name: 'get_security_alerts',
+          description: 'Retrieve security alerts and threats',
+          inputSchema: { type: 'object', properties: {} },
+        },
+        {
+          name: 'get_risk_detections',
+          description: 'Get identity risk detections',
+          inputSchema: { type: 'object', properties: {} },
+        },
+        {
+          name: 'get_security_score',
+          description: 'Get organization security score',
+          inputSchema: { type: 'object', properties: {} },
         },
       ],
     }));
 
-    // Handle tool calls - where magic happens
     this.server.setRequestHandler(CallToolRequestSchema, async (request) => {
       const { name, arguments: args } = request.params;
 
       try {
         switch (name) {
-          case 'get_all_intune_devices':
+          // Intune Cases
+          case 'get_intune_devices':
             const devices = await intuneService.getAllDevices();
-            return {
-              content: [
-                {
-                  type: 'text',
-                  text: `Found ${devices.length} Intune managed devices:\n\n${this.formatDevices(devices)}`,
-                },
-              ],
-            };
+            return { content: [{ type: 'text', text: `Found ${devices.length} devices:\n\n${this.formatDevices(devices)}` }] };
 
           case 'search_intune_devices':
-            if (!args?.query) {
-              throw new Error('Query parameter is required');
-            }
+            if (!args?.query) throw new Error('Query required');
             const searchResults = await intuneService.searchDevices(args.query as string);
-            return {
-              content: [
-                {
-                  type: 'text',
-                  text: `Search results for "${args.query}":\n\n${this.formatDevices(searchResults)}`,
-                },
-              ],
-            };
-
-          case 'get_intune_device':
-            if (!args?.deviceId) {
-              throw new Error('DeviceId parameter is required');
-            }
-            const device = await intuneService.getDeviceById(args.deviceId as string);
-            return {
-              content: [
-                {
-                  type: 'text',
-                  text: device 
-                    ? this.formatDeviceDetails(device)
-                    : `Device with ID ${args.deviceId} not found.`,
-                },
-              ],
-            };
-
-          case 'get_intune_applications':
-            const applications = await intuneService.getApplications();
-            return {
-              content: [
-                {
-                  type: 'text',
-                  text: `Found ${applications.length} applications:\n\n${this.formatApplications(applications)}`,
-                },
-              ],
-            };
+            return { content: [{ type: 'text', text: `Search results:\n\n${this.formatDevices(searchResults)}` }] };
 
           case 'get_compliance_report':
             const report = await intuneService.getComplianceReport();
-            return {
-              content: [
-                {
-                  type: 'text',
-                  text: this.formatComplianceReport(report),
-                },
-              ],
-            };
+            return { content: [{ type: 'text', text: this.formatComplianceReport(report) }] };
+
+          // Azure AD Cases
+          case 'get_users':
+            const users = await azureADService.getUsers();
+            return { content: [{ type: 'text', text: `Found ${users.length} users:\n\n${this.formatUsers(users)}` }] };
+
+          case 'search_users':
+            if (!args?.query) throw new Error('Query required');
+            const userResults = await azureADService.searchUsers(args.query as string);
+            return { content: [{ type: 'text', text: `User search results:\n\n${this.formatUsers(userResults)}` }] };
+
+          case 'get_groups':
+            const groups = await azureADService.getGroups();
+            return { content: [{ type: 'text', text: `Found ${groups.length} groups:\n\n${this.formatGroups(groups)}` }] };
+
+          case 'get_user_roles':
+            if (!args?.userId) throw new Error('UserId required');
+            const roles = await azureADService.getUserRoles(args.userId as string);
+            return { content: [{ type: 'text', text: `User roles:\n\n${this.formatRoles(roles)}` }] };
+
+          // Security Cases
+          case 'get_security_alerts':
+            const alerts = await securityService.getSecurityAlerts();
+            return { content: [{ type: 'text', text: `Found ${alerts.length} alerts:\n\n${this.formatAlerts(alerts)}` }] };
+
+          case 'get_risk_detections':
+            const risks = await securityService.getRiskDetections();
+            return { content: [{ type: 'text', text: `Found ${risks.length} risk detections:\n\n${this.formatRisks(risks)}` }] };
+
+          case 'get_security_score':
+            const score = await securityService.getSecurityScore();
+            return { content: [{ type: 'text', text: this.formatSecurityScore(score) }] };
 
           default:
             throw new Error(`Unknown tool: ${name}`);
         }
       } catch (error) {
         return {
-          content: [
-            {
-              type: 'text',
-              text: `Error executing ${name}: ${error instanceof Error ? error.message : String(error)}`,
-            },
-          ],
+          content: [{ type: 'text', text: `Error: ${error instanceof Error ? error.message : String(error)}` }],
           isError: true,
         };
       }
@@ -166,49 +155,49 @@ class AzureGraphMCPServer {
   }
 
   private formatDevices(devices: any[]): string {
-    return devices.map(device => 
-      `📱 ${device.deviceName} (${device.operatingSystem})\n` +
-      `   User: ${device.emailAddress}\n` +
-      `   Compliance: ${device.complianceState}\n` +
-      `   Last Sync: ${device.lastSyncDateTime}\n`
-    ).join('\n');
+    return devices.map(d => `📱 ${d.deviceName} (${d.operatingSystem})\n   User: ${d.emailAddress}\n   Compliance: ${d.complianceState}`).join('\n\n');
   }
 
-  private formatDeviceDetails(device: any): string {
-    return `🔍 Device Details:\n\n` +
-      `Name: ${device.deviceName}\n` +
-      `OS: ${device.operatingSystem} ${device.osVersion}\n` +
-      `User: ${device.emailAddress}\n` +
-      `Manufacturer: ${device.manufacturer}\n` +
-      `Model: ${device.model}\n` +
-      `Serial: ${device.serialNumber}\n` +
-      `Compliance: ${device.complianceState}\n` +
-      `Management State: ${device.managementState}\n` +
-      `Enrollment Type: ${device.deviceEnrollmentType}\n` +
-      `Last Sync: ${device.lastSyncDateTime}`;
+  private formatUsers(users: any[]): string {
+    return users.map(u => `👤 ${u.displayName}\n   Email: ${u.userPrincipalName}\n   Department: ${u.department}\n   Status: ${u.accountEnabled ? 'Active' : 'Disabled'}`).join('\n\n');
   }
 
-  private formatApplications(applications: any[]): string {
-    return applications.map(app => 
-      `📱 ${app.displayName}\n   Publisher: ${app.publisher || 'Unknown'}`
-    ).join('\n');
+  private formatGroups(groups: any[]): string {
+    return groups.map(g => `👥 ${g.displayName}\n   Type: ${g.groupTypes.join(', ') || 'Security'}\n   Description: ${g.description || 'No description'}`).join('\n\n');
+  }
+
+  private formatRoles(roles: any[]): string {
+    return roles.map(r => `🔐 ${r.displayName}\n   Description: ${r.description || 'No description'}`).join('\n\n');
+  }
+
+  private formatAlerts(alerts: any[]): string {
+    return alerts.map(a => `🚨 ${a.title}\n   Severity: ${a.severity}\n   Status: ${a.status}\n   Created: ${a.createdDateTime}`).join('\n\n');
+  }
+
+  private formatRisks(risks: any[]): string {
+    return risks.map(r => `⚠️ ${r.riskType}\n   User: ${r.userDisplayName}\n   Level: ${r.riskLevel}\n   State: ${r.riskState}`).join('\n\n');
+  }
+
+  private formatSecurityScore(score: any): string {
+    return `🛡️ Security Score: ${score.currentScore || 'N/A'}/${score.maxScore || 'N/A'}\n` +
+           `Percentage: ${score.averageComparativeScores?.[0]?.averageScore || 'N/A'}%\n` +
+           `Last Updated: ${score.createdDateTime || 'N/A'}`;
   }
 
   private formatComplianceReport(report: any): string {
-    return `📊 Compliance Summary:\n\n` +
-      `Compliant Devices: ${report.compliantDeviceCount || 0}\n` +
-      `Non-compliant Devices: ${report.nonCompliantDeviceCount || 0}\n` +
-      `Error Devices: ${report.errorDeviceCount || 0}\n` +
-      `Unknown Devices: ${report.unknownDeviceCount || 0}`;
+    return `📊 Compliance Summary:\n` +
+           `Compliant: ${report.compliantDeviceCount || 0}\n` +
+           `Non-compliant: ${report.nonCompliantDeviceCount || 0}\n` +
+           `Error: ${report.errorDeviceCount || 0}\n` +
+           `Unknown: ${report.unknownDeviceCount || 0}`;
   }
 
   async start() {
     const transport = new StdioServerTransport();
     await this.server.connect(transport);
-    console.error('Azure Graph MCP Server running on stdio');
+    console.error('Universal Microsoft Graph Intelligence Server running on stdio');
   }
 }
 
-// Start the server
-const server = new AzureGraphMCPServer();
+const server = new UniversalGraphMCPServer();
 server.start().catch(console.error);
